@@ -1,5 +1,12 @@
 import "./globals.css"
 import Link from "next/link"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Spotify Clone",
+  description: "Spotify replica con Next.js y Supabase",
+  manifest: "/manifest.json",
+}
 
 export default function RootLayout({
 children
