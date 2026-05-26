@@ -1,7 +1,7 @@
 {
   "name": "Spotify Clone",
   "short_name": "Spotify",
-  "description": "Spotify Clone App",
+  "description": "Spotify replica con Next.js y Supabase",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
