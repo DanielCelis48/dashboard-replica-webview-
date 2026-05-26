@@ -1,144 +1,368 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import {
+useState
+}
+from "react"
 
-export default function RegisterPage() {
+import {
+useRouter
+}
+from "next/navigation"
 
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [password, setPassword] = useState("");
-  const [mensaje, setMensaje] = useState("");
+import {
+supabase
+}
+from "@/lib/supabaseClient"
 
-  const handleRegister = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+export default function Register(){
 
-    e.preventDefault();
+const router=
+useRouter()
 
-    try {
+const[
+nombre,
+setNombre
+]=useState("")
 
-      // 1. Crear usuario en Auth
-      const {
-        data: authData,
-        error: authError
-      } = await supabase.auth.signUp({
-        email: correo,
-        password: password,
-      });
+const[
+correo,
+setCorreo
+]=useState("")
 
-      if (authError) {
-        setMensaje("❌ " + authError.message);
-        console.log(authError);
-        return;
-      }
+const[
+password,
+setPassword
+]=useState("")
 
-      // 2. Obtener ID generado por Supabase
-      const userId = authData.user?.id;
+const[
+msg,
+setMsg
+]=useState("")
 
-      if (!userId) {
-        setMensaje("❌ No se obtuvo ID");
-        return;
-      }
+const[
+loading,
+setLoading
+]=useState(false)
 
-      // 3. Guardar en tabla usuarios
-      const {
-        error: insertError
-      } = await supabase
-      .from("usuarios")
-      .insert([
-        {
-          id: userId,
-          nombre: nombre,
-          correo: correo,
-          foto: ""
-        }
-      ]);
+async function crearCuenta(
 
-      if(insertError){
-        setMensaje("❌ "+insertError.message);
-        console.log(insertError);
-        return;
-      }
+e:any
 
-      setMensaje(
-        "✅ Cuenta creada correctamente"
-      );
+){
 
-    } catch(error){
+e.preventDefault()
 
-      console.log(error);
+setLoading(true)
 
-      setMensaje(
-        "❌ Error de conexión"
-      );
+setMsg("")
 
-    }
+const{
 
-  };
+data,
+error
 
-  return (
+}=await
 
-    <div className="max-w-sm mx-auto mt-10 p-6 border rounded shadow">
+supabase
 
-      <h1 className="text-2xl font-bold mb-5 text-center">
+.auth
 
-        Crear Cuenta
+.signUp({
 
-      </h1>
+email:correo,
 
-      <form
-      onSubmit={handleRegister}
-      className="flex flex-col gap-3">
+password
 
-        <input
-        type="text"
-        placeholder="Nombre"
-        value={nombre}
-        onChange={(e)=>setNombre(e.target.value)}
-        className="border p-2 rounded"
-        required
-        />
+})
 
-        <input
-        type="email"
-        placeholder="Correo"
-        value={correo}
-        onChange={(e)=>setCorreo(e.target.value)}
-        className="border p-2 rounded"
-        required
-        />
+if(error){
 
-        <input
-        type="password"
-        placeholder="Contraseña"
-        value={password}
-        onChange={(e)=>setPassword(e.target.value)}
-        className="border p-2 rounded"
-        required
-        />
+setMsg(
+error.message
+)
 
-        <button
-        type="submit"
-        className="bg-green-600 text-white p-2 rounded">
+setLoading(false)
 
-          Registrarse
+return
 
-        </button>
+}
 
-      </form>
+if(!data.user){
 
-      {mensaje && (
+setMsg(
+"No se creó usuario"
+)
 
-        <p className="mt-4 text-center">
+setLoading(false)
 
-          {mensaje}
+return
 
-        </p>
+}
 
-      )}
+const{
 
-    </div>
+error:db
 
-  );
+}=await
+
+supabase
+
+.from(
+"usuarios"
+)
+
+.insert({
+
+id:
+data.user.id,
+
+nombre,
+
+correo,
+
+foto:null
+
+})
+
+setLoading(false)
+
+if(db){
+
+setMsg(
+db.message
+)
+
+return
+
+}
+
+setMsg(
+"Cuenta creada"
+)
+
+setTimeout(
+
+()=>{
+
+router.push(
+"/login"
+)
+
+},
+
+1200
+
+)
+
+}
+
+return(
+
+<div
+style={{
+
+display:"flex",
+
+justifyContent:"center",
+
+alignItems:"center",
+
+height:"100vh"
+
+}}
+>
+
+<form
+
+onSubmit={
+crearCuenta
+}
+
+style={{
+
+width:"400px",
+
+background:"#181818",
+
+padding:"35px",
+
+borderRadius:"20px",
+
+display:"flex",
+
+flexDirection:"column",
+
+gap:"15px",
+
+boxShadow:
+
+"0 0 30px rgba(0,0,0,.5)"
+
+}}
+
+>
+
+<h1
+style={{
+
+fontSize:"40px",
+
+color:"#1DB954",
+
+textAlign:"center"
+
+}}
+>
+
+Spotify
+
+</h1>
+
+<p
+style={{
+
+textAlign:"center",
+
+color:"#aaa"
+
+}}
+>
+
+Crear cuenta
+
+</p>
+
+<input
+
+placeholder="Nombre"
+
+value={nombre}
+
+onChange={
+e=>
+
+setNombre(
+e.target.value
+)
+
+}
+
+/>
+
+<input
+
+placeholder="Correo"
+
+value={correo}
+
+onChange={
+e=>
+
+setCorreo(
+e.target.value
+)
+
+}
+
+/>
+
+<input
+
+type="password"
+
+placeholder="Contraseña"
+
+value={password}
+
+onChange={
+e=>
+
+setPassword(
+e.target.value
+)
+
+}
+
+/>
+
+<button
+
+className=
+"botonSpotify"
+
+disabled={
+loading
+}
+
+>
+
+{
+
+loading
+
+?
+
+"Creando..."
+
+:
+
+"Crear Cuenta"
+
+}
+
+</button>
+
+<button
+
+type="button"
+
+className=
+"botonSpotify"
+
+style={{
+
+background:"#282828"
+
+}}
+
+onClick={
+()=>
+
+router.push(
+"/login"
+)
+
+}
+
+>
+
+Volver al Login
+
+</button>
+
+<p
+style={{
+
+textAlign:"center",
+
+color:"#ff5555"
+
+}}
+>
+
+{
+
+msg
+
+}
+
+</p>
+
+</form>
+
+</div>
+
+)
+
 }
