@@ -46,7 +46,7 @@ Spotify
 
 <Link href="/user">
 
-👤 Perfil
+👤 Perfil.
 
 </Link>
 
@@ -69,3 +69,4 @@ Spotify
 )
 
 }
+
