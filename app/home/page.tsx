@@ -1,574 +1,427 @@
 "use client"
 
-import {
-useEffect,
-useState
-}
-from "react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
-import {
-supabase
-}
-from "@/lib/supabaseClient"
+interface Cancion {
+  title: string
 
-interface Cancion{
+  preview: string
 
-title:string
+  artist: {
+    name: string
+  }
 
-preview:string
-
-artist:{
-
-name:string
-
+  album: {
+    title: string
+    cover_medium: string
+  }
 }
 
-album:{
+export default function Home() {
 
-title:string
+  const [buscar, setBuscar] = useState("")
 
-cover_medium:string
+  const [canciones, setCanciones] = useState<Cancion[]>([])
 
-}
+  const [msg, setMsg] = useState("")
 
-}
+  const [favoritos, setFavoritos] = useState<string[]>([])
 
-export default function Home(){
+  useEffect(() => {
 
-const[
-buscar,
-setBuscar
-]=useState("")
+    inicio()
 
-const[
-canciones,
-setCanciones
-]=useState<Cancion[]>([])
+    cargarFavoritos()
 
-const[
-msg,
-setMsg
-]=useState("")
+  }, [])
 
-const[
-favoritos,
-setFavoritos
-]=useState<string[]>([])
+  async function cargarFavoritos() {
 
-useEffect(()=>{
+    const {
+      data: { user }
+    } = await supabase.auth.getUser()
 
-inicio()
+    if (!user) {
+      return
+    }
 
-cargarFavoritos()
+    const { data } =
+      await supabase
+        .from("canciones")
+        .select("titulo")
+        .eq("usuario_id", user.id)
+        .eq("favorito", true)
 
-},[])
+    setFavoritos(
 
-async function cargarFavoritos(){
+      data?.map(
 
-const{
+        x => x.titulo
 
-data:{
-user
+      ) || []
 
-}
+    )
 
-}=await
+  }
 
-supabase
+  async function inicio() {
 
-.auth
+    try {
 
-.getUser()
+      const r =
+        await fetch("/api/deezer?type=chart")
 
-if(!user){
+      const d =
+        await r.json()
 
-return
+      setCanciones(
 
-}
+        d.tracks?.data ||
 
-const{
+        []
 
-data
+      )
 
-}=await
+    } catch (error) {
 
-supabase
+      console.log(error)
 
-.from(
-"canciones"
-)
+    }
 
-.select(
-"titulo"
-)
+  }
 
-.eq(
-"usuario_id",
-user.id
-)
+  async function buscarCanciones() {
 
-.eq(
-"favorito",
-true
-)
+    if (!buscar) {
 
-setFavoritos(
+      inicio()
 
-data?.map(
+      return
 
-x=>
+    }
 
-x.titulo
+    try {
 
-)||[]
+      const r =
+        await fetch(
 
-)
+          `/api/deezer?q=${buscar}`
 
-}
+        )
 
-async function inicio(){
+      const d =
+        await r.json()
 
-try{
+      setCanciones(
 
-const r=
+        d.data ||
 
-await fetch(
+        []
 
-"https://corsproxy.io/?https://api.deezer.com/chart"
+      )
 
-)
+    } catch (error) {
 
-const d=
+      console.log(error)
 
-await r.json()
+    }
 
-setCanciones(
+  }
 
-d.tracks?.data||
+  async function favorito(c: Cancion) {
 
-[]
+    const {
+      data: { user }
+    } = await supabase.auth.getUser()
 
-)
+    if (!user) {
 
-}catch(error){
+      setMsg("Inicia sesión")
 
-console.log(error)
+      return
 
-}
+    }
 
-}
+    if (
 
-async function buscarCanciones(){
+      favoritos.includes(
 
-if(!buscar){
+        c.title
 
-inicio()
+      )
 
-return
+    ) {
 
-}
+      setMsg("Ya está ❤️")
 
-try{
+      return
 
-const r=
+    }
 
-await fetch(
+    const { error } =
+      await supabase
+        .from("canciones")
+        .insert({
 
-`https://corsproxy.io/?https://api.deezer.com/search?q=${buscar}`
+          usuario_id: user.id,
 
-)
+          titulo: c.title,
 
-const d=
+          artista: c.artist.name,
 
-await r.json()
+          album: c.album.title,
 
-setCanciones(
+          imagen: c.album.cover_medium,
 
-d.data||
+          preview: c.preview,
 
-[]
+          favorito: true
 
-)
+        })
 
-}catch(error){
+    if (error) {
 
-console.log(error)
+      setMsg(error.message)
 
-}
+      return
 
-}
+    }
 
-async function favorito(
+    setFavoritos(
 
-c:Cancion
+      prev => [
 
-){
+        ...prev,
 
-const{
+        c.title
 
-data:{
-user
+      ]
 
-}
+    )
 
-}=await
+    setMsg(
 
-supabase
+      "Agregado favoritos ❤️"
 
-.auth
+    )
 
-.getUser()
+  }
 
-if(!user){
+  return (
 
-setMsg(
+    <div>
 
-"Inicia sesión"
+      <h1
+        style={{
 
-)
+          fontSize: "42px",
 
-return
+          fontWeight: "900",
 
-}
+          marginBottom: "25px"
 
-if(
+        }}
+      >
 
-favoritos.includes(
+        Buenas noches
 
-c.title
+      </h1>
 
-)
+      <div
+        style={{
 
-){
+          display: "flex",
 
-setMsg(
+          gap: "10px",
 
-"Ya está ❤️"
+          marginBottom: "20px"
 
-)
+        }}
+      >
 
-return
+        <input
 
-}
+          placeholder="¿Qué quieres escuchar?"
 
-const{
+          value={buscar}
 
-error
+          onChange={
 
-}=await
+            e =>
 
-supabase
+              setBuscar(
 
-.from(
-"canciones"
-)
+                e.target.value
 
-.insert({
+              )
 
-usuario_id:
-user.id,
+          }
 
-titulo:
-c.title,
+        />
 
-artista:
-c.artist.name,
+        <button
 
-album:
-c.album.title,
+          className="botonSpotify"
 
-imagen:
-c.album.cover_medium,
+          style={{
 
-preview:
-c.preview,
+            width: "140px"
 
-favorito:true
+          }}
 
-})
+          onClick={
 
-if(error){
+            buscarCanciones
 
-setMsg(
+          }
 
-error.message
+        >
 
-)
+          Buscar
 
-return
+        </button>
 
-}
+      </div>
 
-setFavoritos(
+      {
 
-prev=>
+        msg && (
 
-[
+          <div
+            style={{
 
-...prev,
+              marginBottom: "20px",
 
-c.title
+              background: "#1DB954",
 
-]
+              padding: "12px",
 
-)
+              borderRadius: "12px",
 
-setMsg(
+              fontWeight: "700"
 
-"Agregado favoritos ❤️"
+            }}
+          >
 
-)
+            {msg}
 
-}
+          </div>
 
-return(
+        )
 
-<div>
+      }
 
-<h1
-style={{
+      <div className="gridSpotify">
 
-fontSize:"42px",
+        {
 
-fontWeight:"900",
+          canciones.map(
 
-marginBottom:"25px"
+            (c, i) => (
 
-}}
->
+              <div
 
-Buenas noches
+                key={i}
 
-</h1>
+                className="card"
 
-<div
-style={{
+              >
 
-display:"flex",
+                <img
 
-gap:"10px",
+                  src={
 
-marginBottom:"20px"
+                    c.album.cover_medium
 
-}}
->
+                  }
 
-<input
+                />
 
-placeholder=
+                <div className="titulo">
 
-"¿Qué quieres escuchar?"
+                  {c.title}
 
-value={
+                </div>
 
-buscar
+                <div className="artista">
 
-}
+                  {c.artist.name}
 
-onChange={
+                </div>
 
-e=>
+                <audio
 
-setBuscar(
+                  controls
 
-e.target.value
+                  src={c.preview}
 
-)
+                />
 
-}
+                <button
 
-/>
+                  onClick={
 
-<button
+                    () => favorito(c)
 
-className=
+                  }
 
-"botonSpotify"
+                  className="botonSpotify"
 
-style={{
+                  style={{
 
-width:"140px"
+                    background:
 
-}}
+                      favoritos.includes(
 
-onClick={
+                        c.title
 
-buscarCanciones
+                      )
 
-}
+                        ?
 
->
+                        "#16a34a"
 
-Buscar
+                        :
 
-</button>
+                        undefined
 
-</div>
+                  }}
 
-{
+                >
 
-msg&&(
+                  {
 
-<div
-style={{
+                    favoritos.includes(
 
-marginBottom:"20px",
+                      c.title
 
-background:"#1DB954",
+                    )
 
-padding:"12px",
+                      ?
 
-borderRadius:"12px",
+                      "❤️ Guardado"
 
-fontWeight:"700"
+                      :
 
-}}
->
+                      "🤍 Favorito"
 
-{
+                  }
 
-msg
+                </button>
 
-}
+              </div>
 
-</div>
+            )
 
-)
+          )
 
-}
+        }
 
-<div
-className="gridSpotify"
->
+      </div>
 
-{
+    </div>
 
-canciones.map(
-
-(c,i)=>(
-
-<div
-
-key={i}
-
-className="card"
-
->
-
-<img
-
-src={
-
-c.album.cover_medium
-
-}
-
-/>
-
-<div
-className="titulo"
->
-
-{
-
-c.title
-
-}
-
-</div>
-
-<div
-className="artista"
->
-
-{
-
-c.artist.name
-
-}
-
-</div>
-
-<audio
-
-controls
-
-src={
-
-c.preview
-
-}
-
-/>
-
-<button
-
-onClick={
-
-()=>
-
-favorito(c)
-
-}
-
-className=
-
-"botonSpotify"
-
-style={{
-
-background:
-
-favoritos.includes(
-
-c.title
-
-)
-
-?
-
-"#16a34a"
-
-:
-
-undefined
-
-}}
-
->
-
-{
-
-favoritos.includes(
-
-c.title
-
-)
-
-?
-
-"❤️ Guardado"
-
-:
-
-"🤍 Favorito"
-
-}
-
-</button>
-
-</div>
-
-)
-
-)
-
-}
-
-</div>
-
-</div>
-
-)
+  )
 
 }
