@@ -128,6 +128,8 @@ x.titulo
 
 async function inicio(){
 
+try{
+
 const r=
 
 await fetch(
@@ -148,6 +150,12 @@ d.tracks?.data||
 
 )
 
+}catch(error){
+
+console.log(error)
+
+}
+
 }
 
 async function buscarCanciones(){
@@ -159,6 +167,8 @@ inicio()
 return
 
 }
+
+try{
 
 const r=
 
@@ -179,6 +189,12 @@ d.data||
 []
 
 )
+
+}catch(error){
+
+console.log(error)
+
+}
 
 }
 
